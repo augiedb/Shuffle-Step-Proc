@@ -84,15 +84,37 @@ defmodule ShuffleStep do
   end
 end
 
+
+
 defmodule ShuffleStepProc do
 
-  def schedule( num_shuffles // 1 ) do
-    pid = spawn(ShuffleStep, :runproc, [])
+  defp schedule_processes(pid, num_shuffles) do
     send pid, {self, num_shuffles}
+
+IO.puts "Now running PID" 
+IO.inspect pid
+
     receive do
-      {:ok, num_avg } ->
-        IO.puts num_avg
+      {:ok, sum_shuffle} ->
+        IO.puts sum_shuffle
+        sum_shuffle
     end
+
+  end
+
+
+  def schedule( num_processes // 100, num_shuffles // 1 ) do
+    
+    final_total =
+      (1..num_processes)
+      |> Enum.map(fn(_)-> spawn(ShuffleStep, :runproc, []) end)
+      |> Enum.map(fn(x) -> schedule_processes(x,num_shuffles) end)
+      |> Enum.reduce(0, fn(x, acc) -> x + acc end)    
+      
+    IO.puts "-----------------"
+    IO.puts final_total
+    IO.puts "-----------------"
+
   end
 
 end
