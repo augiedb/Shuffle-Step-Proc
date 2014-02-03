@@ -36,21 +36,50 @@ defmodule ShuffleStep do
     ShuffleStep.Supervisor.start_link
   end
 
+
+  @doc """
+
+    Given a number of times to shuffle the deck, runs 1000 tests with that many.
+
+    Takes one parameter:
+      - Number of times to shuffle the deck
+  
+  """
+
   def run(shuffle_occurences) do
     test_frequency = 1000
     total_matches = shuffle_test(shuffle_occurences, test_frequency, 0)
+    IO.puts "HELLO RUN #{total_matches}"
     total_matches / test_frequency
   end
+
+
+  @doc """
+    This is the function that will run as multiple processes
+  """
 
   def runproc do
     receive do
       { sender, shuffles_happen } ->
-          send sender, { :ok, run(shuffles_happen) }
+
+        :random.seed(:erlang.now)
+ 
+        value = run(shuffles_happen)
+        IO.puts "VALUE INSIDE runproc: #{value}"
+        send sender, { :ok, value }
     end
   end
 
 
 ## Shuffle_Test---------------------------
+
+@doc """
+  Takes three parameters: 
+    - how many times to shuffle the deck 
+    - how many times to run this test
+    - an accumulator
+"""
+
   def shuffle_test(_, 0, acc) do
     acc
   end
@@ -65,6 +94,15 @@ defmodule ShuffleStep do
 
 
 ## Shuffle Multiple Times---------------
+  @doc """
+    
+    Shuffles a deck of cards
+
+    Takes two parameters:
+      - a Deck of cards
+      - an accumulator which keeps track of how many times the deck should be shuffled
+  """
+
   def multi_shuffle(deck, 0) do
     deck
   end
@@ -75,6 +113,17 @@ defmodule ShuffleStep do
 
 
 ## Count Matches in a Deck--------------
+
+  @doc """
+    Counts how many matches show up in a deck of cards.  Continuously compares the top card in the deck to the next one, looking for a match.
+
+    Takes three parameters:
+      - The first card
+      - The rest of the deck
+      - An accumulator total the matches
+
+  """
+
   def count_matches(card1, [ card2 | [] ], acc) do
     acc + Deck.is_a_match(card1, card2)
   end
@@ -88,11 +137,15 @@ end
 
 defmodule ShuffleStepProc do
 
-  defp schedule_processes(pid, num_shuffles) do
-    send pid, {self, num_shuffles}
+@doc"""
+    Takes two parameters:
+      - The PID of the process to be called
+      - Number of shuffles to make
+"""
 
-IO.puts "Now running PID" 
-IO.inspect pid
+  defp kick_off_processes(pid, num_shuffles) do
+   
+    send pid, {self, num_shuffles}
 
     receive do
       {:ok, sum_shuffle} ->
@@ -103,16 +156,25 @@ IO.inspect pid
   end
 
 
+
+  @deck """
+  The main driver of the test.
+
+  Takes two parameters:
+    - Number of processes to run this test with (defaults to 100)
+    - Number of times to shuffle the deck (defaults to 1)
+  """
+
   def schedule( num_processes // 100, num_shuffles // 1 ) do
-    
+
     final_total =
       (1..num_processes)
-      |> Enum.map(fn(_)-> spawn(ShuffleStep, :runproc, []) end)
-      |> Enum.map(fn(x) -> schedule_processes(x,num_shuffles) end)
-      |> Enum.reduce(0, fn(x, acc) -> x + acc end)    
+      |> Enum.map(fn(_)-> spawn(ShuffleStep, :runproc, []) end)      # Create x processes, ready to run
+      |> Enum.map(fn(x) -> kick_off_processes(x,num_shuffles) end)   # Run them with arguments passed
+      |> Enum.reduce(0, fn(x, acc) -> x + acc end)                   # Add up the return values 
       
     IO.puts "-----------------"
-    IO.puts final_total
+    IO.puts (final_total / num_processes)
     IO.puts "-----------------"
 
   end
