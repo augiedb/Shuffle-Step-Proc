@@ -27,6 +27,8 @@ defmodule Deck do
 end
 
 
+#------------------------------------------------------------------------
+
 defmodule ShuffleStep do
   use Application.Behaviour
 
@@ -49,7 +51,6 @@ defmodule ShuffleStep do
   def run(shuffle_occurences) do
     test_frequency = 1000
     total_matches = shuffle_test(shuffle_occurences, test_frequency, 0)
-    IO.puts "HELLO RUN #{total_matches}"
     total_matches / test_frequency
   end
 
@@ -58,14 +59,14 @@ defmodule ShuffleStep do
     This is the function that will run as multiple processes
   """
 
-  def runproc do
+  def create_processes do
     receive do
       { sender, shuffles_happen } ->
 
         :random.seed(:erlang.now)
  
         value = run(shuffles_happen)
-        IO.puts "VALUE INSIDE runproc: #{value}"
+        IO.puts "VALUE INSIDE create_processes: #{value}"
         send sender, { :ok, value }
     end
   end
@@ -73,12 +74,16 @@ defmodule ShuffleStep do
 
 ## Shuffle_Test---------------------------
 
-@doc """
+  @doc """
+
+  Runs the actual test we created this whole app for.  Shuffle the deck,
+  count how many matches it has.
+
   Takes three parameters: 
     - how many times to shuffle the deck 
     - how many times to run this test
     - an accumulator
-"""
+  """
 
   def shuffle_test(_, 0, acc) do
     acc
@@ -137,13 +142,15 @@ end
 
 defmodule ShuffleStepProc do
 
-@doc"""
-    Takes two parameters:
-      - The PID of the process to be called
-      - Number of shuffles to make
-"""
+  @doc"""
+  This function runs existing processes, passing along specific values.
 
-  defp kick_off_processes(pid, num_shuffles) do
+  Takes two parameters:
+    - The PID of the process to be called
+    - Number of shuffles to make
+  """
+
+  defp run_processes(pid, num_shuffles) do
    
     send pid, {self, num_shuffles}
 
@@ -158,7 +165,7 @@ defmodule ShuffleStepProc do
 
 
   @deck """
-  The main driver of the test.
+  The main driver of the test.  It will create the processes, run them, and then report back the answer.
 
   Takes two parameters:
     - Number of processes to run this test with (defaults to 100)
@@ -169,14 +176,30 @@ defmodule ShuffleStepProc do
 
     final_total =
       (1..num_processes)
-      |> Enum.map(fn(_)-> spawn(ShuffleStep, :runproc, []) end)      # Create x processes, ready to run
-      |> Enum.map(fn(x) -> kick_off_processes(x,num_shuffles) end)   # Run them with arguments passed
+      |> Enum.map(fn(_)-> spawn(ShuffleStep, :create_processes, []) end)      # Create x processes, ready to run
+      |> Enum.map(fn(x) -> run_processes(x,num_shuffles) end)   # Run them with arguments passed
       |> Enum.reduce(0, fn(x, acc) -> x + acc end)                   # Add up the return values 
       
     IO.puts "-----------------"
     IO.puts (final_total / num_processes)
     IO.puts "-----------------"
 
+  end
+
+
+  @doc """
+
+  Alternate entry point for when you want to time out how long this takes.
+  Takes the same parameter list as the schedule function above and then passes that one.
+  This is an OK kind of redundancy, as this is an alternate path to the core functionality.
+
+  Takes two parameters:
+    - Number of processes to run this test with (defaults to 100)
+    - Number of times to shuffle the deck (defaults to 1)
+  """
+  
+  def time_it( num_processes // 100, num_shuffles // 1 ) do
+    :timer.tc( ShuffleStepProc, :schedule, [num_processes, num_shuffles] )
   end
 
 end
