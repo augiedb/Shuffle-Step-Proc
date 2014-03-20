@@ -1,0 +1,9 @@
+{application,shuffle_step,
+             [{registered,[]},
+              {description,"shuffle_step"},
+              {mod,{'Elixir.ShuffleStep',[]}},
+              {vsn,"0.0.1"},
+              {modules,['Elixir.Card','Elixir.Deck','Elixir.ShuffleStep',
+                        'Elixir.ShuffleStep.Supervisor',
+                        'Elixir.ShuffleStepProc']},
+              {applications,[kernel,stdlib,elixir]}]}.

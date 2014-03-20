@@ -164,7 +164,7 @@ defmodule ShuffleStepProc do
 
 
 
-  @doc """
+  @deck """
   The main driver of the test.  It will create the processes, run them, and then report back the answer.
 
   Takes two parameters:
