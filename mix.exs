@@ -2,7 +2,7 @@ defmodule ShuffleStep.Mixfile do
   use Mix.Project
 
   def project do
-    [ app: :shuffle_step,
+    [ app: :shuffle_step_proc,
       version: "0.0.1",
       elixir: "~> 0.13-dev",
       deps: deps ]
