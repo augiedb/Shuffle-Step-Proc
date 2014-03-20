@@ -1,4 +1,4 @@
-defmodule Cardmap do
+defmodule Card do
 
   def create(suit, rank, points) do
     %{rank: rank, suit: suit, points: points}
@@ -16,7 +16,7 @@ defmodule Deck do
   def create do
     lc rank inlist ['Ace',2,3,4,5,6,7,8,9,10,'Jack','Queen','King'], 
        suit inlist ['Hearts','Clubs','Diamonds','Spades'], 
-    do: Cardmap.create( rank, suit, init_points(rank) )
+    do: Card.create( rank, suit, init_points(rank) 
   end
 
   def init_points(points) when is_number(points), do: points
@@ -180,12 +180,12 @@ defmodule ShuffleStepProc do
 
     final_total =
       (1..num_processes)
-      |> Enum.map(fn(_)-> spawn(ShuffleStep, :create_processes, []) end)      # Create x processes, ready to run
-      |> Enum.map(fn(x) -> run_processes(x,num_shuffles) end)   # Run them with arguments passed
-      |> Enum.reduce(0, fn(x, acc) -> x + acc end)                   # Add up the return values 
+      |> Enum.map(fn(_)-> spawn(ShuffleStep, :create_processes, []) end)    # Create x processes, ready to run
+      |> Enum.map(fn(x) -> run_processes(x,num_shuffles) end)               # Run them with user's arguments (or defaults)
+      |> Enum.reduce(0, fn(x, acc) -> x + acc end)                          # Add up the return values 
       
     IO.puts "-----------------"
-    IO.puts (final_total / num_processes)
+    IO.puts (final_total / num_processes)                                   # Show average
     IO.puts "-----------------"
 
   end
@@ -194,7 +194,7 @@ defmodule ShuffleStepProc do
   @doc """
 
   Alternate entry point for when you want to time out how long this takes.
-  Takes the same parameter list as the schedule function above and then passes that one.
+  Takes the same parameter list as the `schedule` function above and then passes that one.
   This is an OK kind of redundancy, as this is an alternate path to the core functionality.
 
   Takes two parameters:
