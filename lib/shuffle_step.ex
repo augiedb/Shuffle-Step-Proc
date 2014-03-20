@@ -1,4 +1,8 @@
-defrecord Card, suit: nil, rank: nil, points: nil do
+defmodule Cardmap do
+
+  def create(suit, rank, points) do
+    %{rank: rank, suit: suit, points: points}
+  end
 
   def describe(record) do
     "#{record.rank} of #{record.suit} (#{record.points})"
@@ -12,7 +16,7 @@ defmodule Deck do
   def create do
     lc rank inlist ['Ace',2,3,4,5,6,7,8,9,10,'Jack','Queen','King'], 
        suit inlist ['Hearts','Clubs','Diamonds','Spades'], 
-    do: Card.new rank: rank, suit: suit, points: init_points(rank)
+    do: Cardmap.create( rank, suit, init_points(rank) )
   end
 
   def init_points(points) when is_number(points), do: points
